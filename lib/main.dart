@@ -16,7 +16,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: LandingPage(), // Start with the LandingPage
+      home: LandingPage(),
+      debugShowCheckedModeBanner: false, // Start with the LandingPage
     );
   }
 }

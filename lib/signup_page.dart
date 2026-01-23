@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -9,10 +10,15 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
+  final authService = AuthService();
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+  
+  String selectedUserType = 'Resident';
+  final List<String> userTypes = ['Admin', 'Garbage Collector', 'Resident'];
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +31,34 @@ class _SignUpPageState extends State<SignUpPage> {
           child: Column(
             children: [
               const Icon(Icons.person_add, size: 100, color: Colors.green),
+              const SizedBox(height: 20),
+
+              const Text(
+                'Create Account',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+
+              // User Type Dropdown
+              DropdownButtonFormField<String>(
+                value: selectedUserType,
+                decoration: const InputDecoration(
+                  labelText: 'Account Type',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+                items: userTypes.map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedUserType = newValue!;
+                  });
+                },
+              ),
               const SizedBox(height: 20),
 
               TextFormField(
@@ -85,20 +119,65 @@ class _SignUpPageState extends State<SignUpPage> {
                   backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 ),
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Account created!")),
-                    );
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text("Sign Up"),
+                onPressed: _isLoading ? null : _handleSignUp,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text("Sign Up"),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _handleSignUp() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Check if email already registered
+      if (authService.isEmailRegistered(emailController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Email already registered!")),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Sign up the user
+      final success = await authService.signUp(
+        email: emailController.text,
+        password: passwordController.text,
+        userType: selectedUserType,
+      );
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Account created successfully!")),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to create account!")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 }

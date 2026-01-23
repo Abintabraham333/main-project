@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_7/Requestpickuppage.dart';
+import 'package:flutter_application_7/about_page.dart';
+import 'package:flutter_application_7/help_page.dart';
+import 'package:flutter_application_7/login_page.dart';
 import 'package:flutter_application_7/lodgecomplaint_page.dart';
 import 'package:flutter_application_7/pickuphistory_page.dart';
+import 'package:flutter_application_7/pickupstatus_page.dart';
 import 'package:flutter_application_7/recyclingguide_page.dart';
 import 'package:flutter_application_7/viewschedule_page.dart';
 
@@ -34,14 +38,29 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool showBanner = true;
+  // 🔹 Static flag so banner shows only once per app run
+  static bool hasShownBanner = false;
+
+  bool showBanner = false;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) setState(() => showBanner = false);
-    });
+
+    // Show banner only if it hasn't been shown yet
+    if (!hasShownBanner) {
+      showBanner = true;
+      hasShownBanner = true;
+
+      // Hide banner automatically after 2 seconds
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() => showBanner = false);
+          }
+        });
+      });
+    }
   }
 
   @override
@@ -52,22 +71,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'Oikos',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
         ),
-        actions: const [
+        actions: [
           TextButton(
-            onPressed: null,
-            child: Text("Home", style: TextStyle(color: Colors.black)),
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+            child: const Text("Home", style: TextStyle(color: Colors.black)),
           ),
           TextButton(
-            onPressed: null,
-            child: Text("About Us", style: TextStyle(color: Colors.black)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutPage()),
+              );
+            },
+            child: const Text("About Us", style: TextStyle(color: Colors.black)),
           ),
           TextButton(
-            onPressed: null,
-            child: Text("Help", style: TextStyle(color: Colors.black)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HelpPage()),
+              );
+            },
+            child: const Text("Help", style: TextStyle(color: Colors.black)),
           ),
           TextButton(
-            onPressed: null,
-            child: Text("Logout", style: TextStyle(color: Colors.black)),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LandingPage()),
+                (route) => false,
+              );
+            },
+            child: const Text("Logout", style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -75,6 +112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // 🔹 Banner shows only once per app run
             if (showBanner)
               Container(
                 width: double.infinity,
@@ -90,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
-            const SizedBox(height: 16),
+            if (showBanner) const SizedBox(height: 16),
 
             const Text(
               "Resident Services Dashboard",
@@ -172,7 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const PickupHistoryPage(),
+                        builder: (_) => const PickupStatusPage(),
                       ),
                     ),
                   ),

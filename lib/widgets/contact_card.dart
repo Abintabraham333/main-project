@@ -4,7 +4,7 @@ import '../constants/app_constants.dart';
 class ContactCard extends StatelessWidget {
   final BuildContext context;
 
-  const ContactCard({required this.context, Key? key}) : super(key: key);
+  const ContactCard({required this.context, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -98,10 +98,7 @@ class ContactCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.blue, fontSize: 12),
                 ),
               ],
             ),

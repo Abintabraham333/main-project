@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'services/auth_service.dart';
+import 'todays_route_page.dart';
 
 class GarbageCollectorDashboardPage extends StatelessWidget {
   const GarbageCollectorDashboardPage({super.key});
@@ -21,6 +22,7 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
             onPressed: () async {
               final authService = AuthService();
               await authService.logout();
+              if (!context.mounted) return;
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const LandingPage()),
@@ -58,10 +60,7 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       'Manage your collection tasks',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -83,36 +82,42 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
                 mainAxisSpacing: 16,
                 children: [
                   _buildFeatureCard(
+                    context: context,
                     icon: Icons.route,
                     title: 'Today\'s Route',
                     subtitle: 'View pickup locations',
                     color: Colors.green,
                   ),
                   _buildFeatureCard(
+                    context: context,
                     icon: Icons.check_circle,
                     title: 'Mark Complete',
                     subtitle: 'Complete pickups',
                     color: Colors.blue,
                   ),
                   _buildFeatureCard(
+                    context: context,
                     icon: Icons.error_outline,
                     title: 'Report Issues',
                     subtitle: 'Report problems',
                     color: Colors.red,
                   ),
                   _buildFeatureCard(
+                    context: context,
                     icon: Icons.history,
                     title: 'History',
                     subtitle: 'Past collections',
                     color: Colors.purple,
                   ),
                   _buildFeatureCard(
+                    context: context,
                     icon: Icons.notifications,
                     title: 'Notifications',
                     subtitle: 'New requests',
                     color: Colors.amber,
                   ),
                   _buildFeatureCard(
+                    context: context,
                     icon: Icons.account_circle,
                     title: 'My Profile',
                     subtitle: 'Edit profile',
@@ -158,6 +163,7 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
   }
 
   Widget _buildFeatureCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -167,7 +173,14 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          if (title == "Today's Route") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TodaysRoutePage()),
+            );
+          }
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -188,10 +201,7 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -228,10 +238,7 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
                   ),
                   Text(
                     address,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),

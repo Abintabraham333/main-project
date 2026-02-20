@@ -2,25 +2,47 @@ import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 
 class SocialLinks extends StatelessWidget {
-  const SocialLinks({Key? key}) : super(key: key);
+  const SocialLinks({super.key});
 
   @override
   Widget build(BuildContext context) {
     final socialLinks = [
-      {'platform': 'Website', 'value': AppConstants.websiteUrl, 'icon': Icons.language},
-      {'platform': 'Email', 'value': AppConstants.supportEmail, 'icon': Icons.email},
-      {'platform': 'Phone', 'value': AppConstants.supportPhone, 'icon': Icons.phone},
-      {'platform': 'LinkedIn', 'value': AppConstants.linkedInUrl, 'icon': Icons.business},
-      {'platform': 'Twitter', 'value': AppConstants.twitterUrl, 'icon': Icons.share},
+      {
+        'platform': 'Website',
+        'value': AppConstants.websiteUrl,
+        'icon': Icons.language,
+      },
+      {
+        'platform': 'Email',
+        'value': AppConstants.supportEmail,
+        'icon': Icons.email,
+      },
+      {
+        'platform': 'Phone',
+        'value': AppConstants.supportPhone,
+        'icon': Icons.phone,
+      },
+      {
+        'platform': 'LinkedIn',
+        'value': AppConstants.linkedInUrl,
+        'icon': Icons.business,
+      },
+      {
+        'platform': 'Twitter',
+        'value': AppConstants.twitterUrl,
+        'icon': Icons.share,
+      },
     ];
 
     return Column(
       children: [
-        ...socialLinks.map((link) => _socialLink(
-          platform: link['platform'] as String,
-          value: link['value'] as String,
-          icon: link['icon'] as IconData,
-        )).toList(),
+        ...socialLinks.map(
+          (link) => _socialLink(
+            platform: link['platform'] as String,
+            value: link['value'] as String,
+            icon: link['icon'] as IconData,
+          ),
+        ),
         const SizedBox(height: 16),
         Center(
           child: Column(
@@ -36,10 +58,7 @@ class SocialLinks extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 'Version ${AppConstants.appVersion} • ${AppConstants.copyright}',
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
               ),
             ],
           ),
@@ -48,10 +67,11 @@ class SocialLinks extends StatelessWidget {
     );
   }
 
-  Widget _socialLink(
-      {required String platform,
-      required String value,
-      required IconData icon}) {
+  Widget _socialLink({
+    required String platform,
+    required String value,
+    required IconData icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -72,10 +92,7 @@ class SocialLinks extends StatelessWidget {
                 ),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.blue,
-                  ),
+                  style: const TextStyle(fontSize: 11, color: Colors.blue),
                 ),
               ],
             ),

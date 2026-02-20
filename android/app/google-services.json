@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "768871279458",
+    "project_id": "waste-management-4cd0d",
+    "storage_bucket": "waste-management-4cd0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768871279458:android:0cd1bf738b5e98bdbe5a3b",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_7"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1_eHVtWP0hL0pRbXXOSXW7Q91keZW5JM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

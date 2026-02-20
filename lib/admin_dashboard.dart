@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'services/auth_service.dart';
+import 'manage_pickups_page.dart';
+import 'manage_complaints_page.dart';
+import 'manage_users_page.dart';
+import 'manage_zones_page.dart';
 
-class AdminDashboardPage extends StatelessWidget {
+class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
 
+  @override
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
+}
+
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,6 +30,7 @@ class AdminDashboardPage extends StatelessWidget {
             onPressed: () async {
               final authService = AuthService();
               await authService.logout();
+              if (!context.mounted) return;
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const LandingPage()),
@@ -58,10 +68,7 @@ class AdminDashboardPage extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       'System Management & Oversight',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -137,7 +144,35 @@ class AdminDashboardPage extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Widget? page;
+          switch (title) {
+            case 'Users Management':
+              page = const ManageUsersPage();
+              break;
+            case 'Complaints Review':
+              page = const ManageComplaintsPage();
+              break;
+            case 'Pickup Schedule':
+              page = const ManagePickupsPage();
+              break;
+            case 'Zone Management':
+              page = const ManageZonesPage();
+              break;
+            // Add other cases as implemented
+          }
+
+          if (page != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => page!),
+            );
+          } else {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text("Coming Soon!")));
+          }
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -158,10 +193,7 @@ class AdminDashboardPage extends StatelessWidget {
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
               ),
             ],
           ),

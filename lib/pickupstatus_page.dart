@@ -1,34 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'constants/app_constants.dart';
-
-// Pickup Status Model
-class PickupRequest {
-  final String requestId;
-  final DateTime scheduledDate;
-  final String location;
-  final String status; // Scheduled, On the way, Completed, Cancelled
-  final String wasteType;
-  final String zone;
-  final String collectorName;
-  final String collectorPhone;
-  final double estimatedWeight;
-  final DateTime createdDate;
-  final String notes;
-
-  PickupRequest({
-    required this.requestId,
-    required this.scheduledDate,
-    required this.location,
-    required this.status,
-    required this.wasteType,
-    required this.zone,
-    required this.collectorName,
-    required this.collectorPhone,
-    required this.estimatedWeight,
-    required this.createdDate,
-    required this.notes,
-  });
-}
 
 class PickupStatusPage extends StatefulWidget {
   const PickupStatusPage({super.key});
@@ -38,58 +11,21 @@ class PickupStatusPage extends StatefulWidget {
 }
 
 class _PickupStatusPageState extends State<PickupStatusPage> {
-  // Sample active pickup requests
-  final List<PickupRequest> activePickups = [
-    PickupRequest(
-      requestId: 'REQ001',
-      scheduledDate: DateTime(2025, 1, 23, 10, 30),
-      location: '123 Main Street, Apt 4B',
-      status: 'On the way',
-      wasteType: 'Organic Waste',
-      zone: 'Zone A',
-      collectorName: 'John Smith',
-      collectorPhone: '+1-555-0101',
-      estimatedWeight: 20.0,
-      createdDate: DateTime(2025, 1, 22, 09, 00),
-      notes: 'Please ensure waste is in sealed bags',
-    ),
-    PickupRequest(
-      requestId: 'REQ002',
-      scheduledDate: DateTime(2025, 1, 24, 14, 00),
-      location: '456 Oak Avenue',
-      status: 'Scheduled',
-      wasteType: 'Plastic & Recyclables',
-      zone: 'Zone B',
-      collectorName: 'Emma Johnson',
-      collectorPhone: '+1-555-0102',
-      estimatedWeight: 15.5,
-      createdDate: DateTime(2025, 1, 22, 10, 30),
-      notes: 'Separate recyclables by type',
-    ),
-    PickupRequest(
-      requestId: 'REQ003',
-      scheduledDate: DateTime(2025, 1, 22, 16, 45),
-      location: '789 Pine Road',
-      status: 'Completed',
-      wasteType: 'Mixed Waste',
-      zone: 'Zone C',
-      collectorName: 'Mike Davis',
-      collectorPhone: '+1-555-0103',
-      estimatedWeight: 25.0,
-      createdDate: DateTime(2025, 1, 20, 14, 00),
-      notes: 'Pickup completed successfully',
-    ),
-  ];
+  final User? currentUser = FirebaseAuth.instance.currentUser;
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'scheduled':
-        return Colors.blue;
-      case 'on the way':
+      case 'pending':
         return Colors.orange;
+      case 'on the way':
+      case 'in progress':
+      case 'approved':
+        return Colors.blue;
       case 'completed':
         return AppConstants.primaryGreen;
       case 'cancelled':
+      case 'rejected':
         return Colors.red;
       default:
         return Colors.grey;
@@ -99,12 +35,16 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'scheduled':
+      case 'pending':
         return Icons.schedule;
       case 'on the way':
+      case 'in progress':
+      case 'approved':
         return Icons.local_shipping;
       case 'completed':
         return Icons.check_circle;
       case 'cancelled':
+      case 'rejected':
         return Icons.cancel;
       default:
         return Icons.info;
@@ -113,6 +53,12 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(child: Text("Please login to view active pickups")),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Pickup Status"),
@@ -121,16 +67,26 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
         elevation: 0,
       ),
       backgroundColor: AppConstants.backgroundColor,
-      body: activePickups.isEmpty
-          ? Center(
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('pickup_requests')
+            .where('userId', isEqualTo: currentUser!.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.local_shipping,
-                    size: 80,
-                    color: Colors.grey[300],
-                  ),
+                  Icon(Icons.local_shipping, size: 80, color: Colors.grey[300]),
                   const SizedBox(height: 16),
                   Text(
                     'No active pickups',
@@ -147,37 +103,62 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                   ),
                 ],
               ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Active Pickups (${activePickups.length})',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppConstants.primaryGreen,
-                    ),
+            );
+          }
+
+          final docs = snapshot.data!.docs;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Active Pickups (${docs.length})',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppConstants.primaryGreen,
                   ),
-                  const SizedBox(height: 16),
-                  ...activePickups.map((pickup) {
-                    return _buildPickupCard(pickup, context);
-                  }).toList(),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                ...docs.map((doc) {
+                  return _buildPickupCard(doc);
+                }),
+              ],
             ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildPickupCard(PickupRequest pickup, BuildContext context) {
+  Widget _buildPickupCard(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final docId = doc.id;
+    final requestId = docId.length > 6
+        ? "...${docId.substring(docId.length - 6)}"
+        : docId;
+
+    final status = (data['status'] ?? 'Pending').toString();
+    final wasteType = (data['wasteType'] ?? 'General').toString();
+    final location = (data['address'] ?? 'Unknown Location').toString();
+    final zone = (data['zone'] ?? 'Unknown').toString();
+
+    // Optional Fields (might not exist yet)
+    final collectorName = data['collectorName']?.toString() ?? 'Allocating...';
+    final collectorPhone = data['collectorPhone']?.toString() ?? '';
+    final notes = data['notes']?.toString() ?? '';
+
+    DateTime scheduledDate = DateTime.now();
+    if (data['pickupDate'] != null) {
+      scheduledDate = (data['pickupDate'] as Timestamp).toDate();
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -191,7 +172,7 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Request ID: ${pickup.requestId}',
+                      'Request ID: $requestId',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -200,34 +181,33 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      pickup.wasteType,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      wasteType,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(pickup.status).withOpacity(0.2),
+                    color: _getStatusColor(status).withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        _getStatusIcon(pickup.status),
+                        _getStatusIcon(status),
                         size: 16,
-                        color: _getStatusColor(pickup.status),
+                        color: _getStatusColor(status),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        pickup.status,
+                        status,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: _getStatusColor(pickup.status),
+                          color: _getStatusColor(status),
                         ),
                       ),
                     ],
@@ -239,8 +219,11 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
             // Location and Date
             Row(
               children: [
-                Icon(Icons.location_on,
-                    size: 20, color: AppConstants.primaryGreen),
+                Icon(
+                  Icons.location_on,
+                  size: 20,
+                  color: AppConstants.primaryGreen,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -255,27 +238,27 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        pickup.location,
-                        style: const TextStyle(fontSize: 14),
-                      ),
+                      Text(location, style: const TextStyle(fontSize: 14)),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            // Scheduled Date and Time
+            // Scheduled Date
             Row(
               children: [
-                Icon(Icons.calendar_today,
-                    size: 20, color: AppConstants.primaryGreen),
+                Icon(
+                  Icons.calendar_today,
+                  size: 20,
+                  color: AppConstants.primaryGreen,
+                ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Scheduled Date & Time',
+                      'Scheduled Date',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -284,7 +267,7 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${pickup.scheduledDate.day}/${pickup.scheduledDate.month}/${pickup.scheduledDate.year} at ${pickup.scheduledDate.hour}:${pickup.scheduledDate.minute.toString().padLeft(2, '0')}',
+                      '${scheduledDate.day}/${scheduledDate.month}/${scheduledDate.year}',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ],
@@ -309,42 +292,16 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      pickup.zone,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    Text(zone, style: const TextStyle(fontSize: 14)),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            // Estimated Weight
-            Row(
-              children: [
-                Icon(Icons.balance, size: 20, color: AppConstants.primaryGreen),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Estimated Weight',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${pickup.estimatedWeight} kg',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+
             const Divider(height: 16),
-            // Collector Information
+
+            // Collector Information (Only show if assigned or has mock placeholder logic intended for future)
+            // For now, we show whatever data is present or "Allocating..."
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -370,48 +327,46 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            pickup.collectorName,
+                            collectorName,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            pickup.collectorPhone,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Calling ${pickup.collectorName}...',
+                          if (collectorPhone.isNotEmpty)
+                            Text(
+                              collectorPhone,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue,
                               ),
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.call, size: 18),
-                        label: const Text('Call'),
-                        style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.primaryGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                        ),
+                        ],
                       ),
+                      if (collectorPhone.isNotEmpty)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // Call logic placeholder
+                          },
+                          icon: const Icon(Icons.call, size: 18),
+                          label: const Text('Call'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppConstants.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],
               ),
             ),
+
             // Notes
-            if (pickup.notes.isNotEmpty) ...[
+            if (notes.isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -432,47 +387,11 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      pickup.notes,
-                      style: const TextStyle(fontSize: 12),
-                    ),
+                    Text(notes, style: const TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Pickup rescheduled'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.edit_calendar),
-                    label: const Text('Reschedule'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Support ticket created'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.help_outline),
-                    label: const Text('Support'),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'about_page.dart';
 import 'help_page.dart';
+import 'services/complaint_service.dart';
 
 class LodgeComplaintPage extends StatefulWidget {
   const LodgeComplaintPage({super.key});
@@ -11,13 +12,25 @@ class LodgeComplaintPage extends StatefulWidget {
 }
 
 class _LodgeComplaintPageState extends State<LodgeComplaintPage> {
+  final _formKey = GlobalKey<FormState>();
+  final ComplaintService _complaintService = ComplaintService();
+
   String complaintType = 'Missed Pickup';
   String zone = 'Zone A';
   DateTime selectedDate = DateTime.now();
+  bool _isLoading = false;
 
-  final TextEditingController locationController =
-      TextEditingController(text: 'Address');
+  final TextEditingController locationController = TextEditingController(
+    text: '',
+  );
   final TextEditingController descriptionController = TextEditingController();
+
+  @override
+  void dispose() {
+    locationController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
 
   Future<void> pickDate() async {
     DateTime? date = await showDatePicker(
@@ -31,6 +44,62 @@ class _LodgeComplaintPageState extends State<LodgeComplaintPage> {
       setState(() {
         selectedDate = date;
       });
+    }
+  }
+
+  Future<void> _submitComplaint() async {
+    // Unfocus keyboard first to prevent UI issues
+    FocusScope.of(context).unfocus();
+
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _complaintService.submitComplaint(
+        complaintType: complaintType,
+        dateOfIncident: selectedDate,
+        location: locationController.text,
+        zone: zone,
+        description: descriptionController.text,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Complaint logged successfully!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Return to Home Page
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+        (route) => false,
+      );
+    } catch (e, stackTrace) {
+      debugPrint("Error submitting complaint: $e");
+      debugPrint("Stack trace: $stackTrace");
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll("Exception: ", "")),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -113,94 +182,124 @@ class _LodgeComplaintPageState extends State<LodgeComplaintPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Incident Details',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Incident Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: dropdownField(
-                              label: 'Nature of Complaint',
-                              value: complaintType,
-                              items: ['Missed Pickup', 'Delay', 'Other'],
-                              onChanged: (val) {
-                                setState(() => complaintType = val!);
-                              },
+                        Row(
+                          children: [
+                            Expanded(
+                              child: dropdownField(
+                                label: 'Nature of Complaint',
+                                value: complaintType,
+                                items: ['Missed Pickup', 'Delay', 'Other'],
+                                onChanged: (val) {
+                                  setState(() => complaintType = val!);
+                                },
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(child: dateField()),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      textField(
-                        label: 'Location of Incident',
-                        controller: locationController,
-                        maxLines: 2,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      dropdownField(
-                        label: 'Zone/Area',
-                        value: zone,
-                        items: ['Zone A', 'Zone B', 'Zone C'],
-                        onChanged: (val) {
-                          setState(() => zone = val!);
-                        },
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      const Text(
-                        'Complaint Description',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                            const SizedBox(width: 16),
+                            Expanded(child: dateField()),
+                          ],
                         ),
-                      ),
 
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 16),
 
-                      textField(
-                        label: 'Provide a Detailed Description',
-                        controller: descriptionController,
-                        maxLines: 4,
-                      ),
+                        textField(
+                          label: 'Location of Incident',
+                          controller: locationController,
+                          maxLines: 2,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Location is required';
+                            }
+                            return null;
+                          },
+                        ),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 16),
 
-                      Center(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 14,
+                        dropdownField(
+                          label: 'Zone/Area',
+                          value: zone,
+                          items: ['Zone A', 'Zone B', 'Zone C'],
+                          onChanged: (val) {
+                            setState(() => zone = val!);
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        const Text(
+                          'Complaint Description',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        textField(
+                          label: 'Provide a Detailed Description',
+                          controller: descriptionController,
+                          maxLines: 4,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Description is required';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        Center(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 14,
+                              ),
+                              disabledBackgroundColor: Colors.grey.shade400,
                             ),
-                          ),
-                          onPressed: () {},
-                          child: const Text(
-                            'Submit Complaint',
-                            style: TextStyle(fontSize: 16),
+                            onPressed: _isLoading ? null : _submitComplaint,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Submit Complaint',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -233,19 +332,19 @@ class _LodgeComplaintPageState extends State<LodgeComplaintPage> {
     required String label,
     required TextEditingController controller,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label),
         const SizedBox(height: 6),
-        TextField(
+        TextFormField(
           controller: controller,
           maxLines: maxLines,
+          validator: validator,
           decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
           ),
         ),
       ],
@@ -265,27 +364,21 @@ class _LodgeComplaintPageState extends State<LodgeComplaintPage> {
         Text(label),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: value,
+          key: ValueKey(value),
+          initialValue: value,
           items: items
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e),
-                ),
-              )
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
           onChanged: onChanged,
           decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
           ),
         ),
       ],
     );
   }
 
-  // 🔹 Date Picker Field (NO intl package needed)
+  // 🔹 Date Picker Field
   Widget dateField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

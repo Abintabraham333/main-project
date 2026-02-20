@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_7/Requestpickuppage.dart';
+import 'package:flutter_application_7/request_pickup_page.dart';
 import 'package:flutter_application_7/about_page.dart';
 import 'package:flutter_application_7/help_page.dart';
 import 'package:flutter_application_7/login_page.dart';
@@ -85,7 +85,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 MaterialPageRoute(builder: (_) => const AboutPage()),
               );
             },
-            child: const Text("About Us", style: TextStyle(color: Colors.black)),
+            child: const Text(
+              "About Us",
+              style: TextStyle(color: Colors.black),
+            ),
           ),
           TextButton(
             onPressed: () {

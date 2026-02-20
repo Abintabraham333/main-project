@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/pickup_service.dart';
+import 'request_pickup_page.dart';
 
 class ViewSchedulePage extends StatefulWidget {
   const ViewSchedulePage({super.key});
@@ -8,56 +12,17 @@ class ViewSchedulePage extends StatefulWidget {
 }
 
 class _ViewSchedulePageState extends State<ViewSchedulePage> {
-  // Sample pickup requests with status
-  final List<Map<String, dynamic>> pickupRequests = [
-    {
-      'id': 'REQ001',
-      'date': '2026-01-25',
-      'time': '08:00 AM',
-      'address': '123 Main Street',
-      'zone': 'Zone A',
-      'wasteType': 'General Waste',
-      'status': 'Pending',
-      'statusColor': Colors.orange,
-      'icon': Icons.schedule,
-    },
-    {
-      'id': 'REQ002',
-      'date': '2026-01-24',
-      'time': '10:30 AM',
-      'address': '456 Oak Avenue',
-      'zone': 'Zone B',
-      'wasteType': 'Recyclables',
-      'status': 'Completed',
-      'statusColor': Colors.green,
-      'icon': Icons.check_circle,
-    },
-    {
-      'id': 'REQ003',
-      'date': '2026-01-26',
-      'time': '02:00 PM',
-      'address': '789 Elm Street',
-      'zone': 'Zone C',
-      'wasteType': 'Mixed Waste',
-      'status': 'In Progress',
-      'statusColor': Colors.blue,
-      'icon': Icons.local_shipping,
-    },
-    {
-      'id': 'REQ004',
-      'date': '2026-01-23',
-      'time': '09:15 AM',
-      'address': '321 Pine Road',
-      'zone': 'Zone A',
-      'wasteType': 'Organic Waste',
-      'status': 'Cancelled',
-      'statusColor': Colors.red,
-      'icon': Icons.cancel,
-    },
-  ];
+  final User? currentUser = FirebaseAuth.instance.currentUser;
+  final PickupService _pickupService = PickupService();
 
   @override
   Widget build(BuildContext context) {
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(child: Text("Please login to view your schedule")),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -66,101 +31,135 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
         ),
         backgroundColor: Colors.green,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green, width: 2),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Your Pickup Requests',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Total Requests: ${pickupRequests.length}',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('pickup_requests')
+            .where('userId', isEqualTo: currentUser!.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-              // Status Summary Cards
-              Row(
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No pickup requests found.'));
+          }
+
+          final docs = snapshot.data!.docs;
+
+          // Calculate summary stats
+          int pendingCount = 0;
+          int inProgressCount = 0;
+          int completedCount = 0;
+
+          for (var doc in docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            final status = (data['status'] ?? 'pending')
+                .toString()
+                .toLowerCase();
+            if (status == 'pending') pendingCount++;
+            if (status == 'in progress' || status == 'approved')
+              inProgressCount++;
+            if (status == 'completed') completedCount++;
+          }
+
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _buildStatusSummaryCard(
-                      label: 'Pending',
-                      count: pickupRequests
-                          .where((r) => r['status'] == 'Pending')
-                          .length
-                          .toString(),
-                      color: Colors.orange,
+                  // Header Section
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green, width: 2),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Your Pickup Requests',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Total Requests: ${docs.length}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatusSummaryCard(
-                      label: 'In Progress',
-                      count: pickupRequests
-                          .where((r) => r['status'] == 'In Progress')
-                          .length
-                          .toString(),
-                      color: Colors.blue,
-                    ),
+                  const SizedBox(height: 24),
+
+                  // Status Summary Cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatusSummaryCard(
+                          label: 'Pending',
+                          count: pendingCount.toString(),
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatusSummaryCard(
+                          label: 'In Progress',
+                          count: inProgressCount.toString(),
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatusSummaryCard(
+                          label: 'Completed',
+                          count: completedCount.toString(),
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatusSummaryCard(
-                      label: 'Completed',
-                      count: pickupRequests
-                          .where((r) => r['status'] == 'Completed')
-                          .length
-                          .toString(),
-                      color: Colors.green,
-                    ),
+                  const SizedBox(height: 24),
+
+                  // Pickup Requests List
+                  const Text(
+                    'Request Details',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final data = doc.data() as Map<String, dynamic>;
+                      return _buildRequestCard(data, doc.id);
+                    },
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // Pickup Requests List
-              const Text(
-                'Request Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: pickupRequests.length,
-                itemBuilder: (context, index) {
-                  final request = pickupRequests[index];
-                  return _buildRequestCard(request);
-                },
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -202,7 +201,52 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
     );
   }
 
-  Widget _buildRequestCard(Map<String, dynamic> request) {
+  Widget _buildRequestCard(Map<String, dynamic> data, String docId) {
+    // Parse Status
+    String status = (data['status'] ?? 'Pending').toString();
+    // Capitalize first letter
+    if (status.isNotEmpty) {
+      status = status[0].toUpperCase() + status.substring(1);
+    }
+
+    Color statusColor = Colors.grey;
+    IconData icon = Icons.help_outline;
+
+    switch (status.toLowerCase()) {
+      case 'pending':
+        statusColor = Colors.orange;
+        icon = Icons.schedule;
+        break;
+      case 'approved':
+      case 'in progress':
+        statusColor = Colors.blue;
+        icon = Icons.local_shipping;
+        break;
+      case 'completed':
+        statusColor = Colors.green;
+        icon = Icons.check_circle;
+        break;
+      case 'rejected':
+      case 'cancelled':
+        statusColor = Colors.red;
+        icon = Icons.cancel;
+        break;
+    }
+
+    // Parse Date
+    String dateStr = 'Unknown Date';
+
+    if (data['pickupDate'] != null) {
+      DateTime dt = (data['pickupDate'] as Timestamp).toDate();
+      dateStr = "${dt.day}/${dt.month}/${dt.year}";
+      // If we had a time field we'd display it, but relying on date for now
+    }
+
+    // Address & Zone
+    final address = data['address'] ?? 'No address';
+    final zone = data['zone'] ?? 'Unknown Zone';
+    final wasteType = data['wasteType'] ?? 'General';
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -220,7 +264,7 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Request #${request['id']}',
+                      'Request ID: ...${docId.length > 6 ? docId.substring(docId.length - 6) : docId}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -229,28 +273,21 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${request['date']} • ${request['time']}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
+                      dateStr,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                   ],
                 ),
                 Chip(
                   label: Text(
-                    request['status'],
+                    status,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  backgroundColor: request['statusColor'],
-                  avatar: Icon(
-                    request['icon'],
-                    color: Colors.white,
-                    size: 18,
-                  ),
+                  backgroundColor: statusColor,
+                  avatar: Icon(icon, color: Colors.white, size: 18),
                 ),
               ],
             ),
@@ -259,25 +296,22 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
             // Location and Zone
             Row(
               children: [
-                Icon(Icons.location_on, color: Colors.green, size: 18),
+                const Icon(Icons.location_on, color: Colors.green, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        request['address'],
+                        address,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       Text(
-                        request['zone'],
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        zone,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -289,14 +323,11 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
             // Waste Type
             Row(
               children: [
-                Icon(Icons.delete, color: Colors.orange, size: 18),
+                const Icon(Icons.delete, color: Colors.orange, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  request['wasteType'],
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
+                  wasteType,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 ),
               ],
             ),
@@ -307,23 +338,19 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: request['statusColor'].withValues(alpha: 0.1),
+                color: statusColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    request['icon'],
-                    color: request['statusColor'],
-                    size: 20,
-                  ),
+                  Icon(icon, color: statusColor, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _getStatusDescription(request['status']),
+                      _getStatusDescription(status),
                       style: TextStyle(
                         fontSize: 12,
-                        color: request['statusColor'],
+                        color: statusColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -331,33 +358,49 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
                 ],
               ),
             ),
-
-            // Action Buttons
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.info_outline, size: 18),
-                    label: const Text('Details'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (request['status'] == 'Pending')
+            // Edit Button (Only if Pending)
+            // Edit and Delete Buttons (Only if Pending)
+            if (status.toLowerCase() == 'pending')
+              Row(
+                children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RequestPickupPage(
+                              initialData: data,
+                              docId: docId,
+                            ),
+                          ),
+                        );
+                      },
                       icon: const Icon(Icons.edit, size: 18),
                       label: const Text('Edit'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.orange,
                         side: const BorderSide(color: Colors.orange),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
-              ],
-            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showDeleteConfirmation(context, docId),
+                      icon: const Icon(Icons.delete, size: 18),
+                      label: const Text('Delete'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -365,17 +408,64 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
   }
 
   String _getStatusDescription(String status) {
-    switch (status) {
-      case 'Pending':
+    switch (status.toLowerCase()) {
+      case 'pending':
         return 'Waiting for pickup assignment';
-      case 'In Progress':
+      case 'in progress':
+      case 'approved':
         return 'Garbage collector on the way';
-      case 'Completed':
+      case 'completed':
         return 'Pickup successfully completed';
-      case 'Cancelled':
-        return 'Request was cancelled';
+      case 'cancelled':
+      case 'rejected':
+        return 'Request was cancelled/rejected';
       default:
-        return 'Unknown status';
+        return 'Status updated';
     }
+  }
+
+  void _showDeleteConfirmation(BuildContext context, String docId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Request"),
+        content: const Text(
+          "Are you sure you want to delete this pickup request?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              try {
+                await _pickupService.deletePickupRequest(docId);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Request deleted successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Error: $e"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
   }
 }

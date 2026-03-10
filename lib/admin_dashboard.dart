@@ -5,6 +5,7 @@ import 'manage_pickups_page.dart';
 import 'manage_complaints_page.dart';
 import 'manage_users_page.dart';
 import 'manage_zones_page.dart';
+import 'manage_collector_reports_page.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -102,6 +103,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     color: Colors.orange,
                   ),
                   _buildFeatureCard(
+                    icon: Icons.warning,
+                    title: 'Collector Reports',
+                    subtitle: 'View GC issues',
+                    color: Colors.pink,
+                  ),
+                  _buildFeatureCard(
                     icon: Icons.schedule,
                     title: 'Pickup Schedule',
                     subtitle: 'Manage schedules',
@@ -141,8 +148,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     required Color color,
   }) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           Widget? page;
@@ -159,6 +164,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             case 'Zone Management':
               page = const ManageZonesPage();
               break;
+            case 'Collector Reports':
+              page = const ManageCollectorReportsPage();
+              break;
             // Add other cases as implemented
           }
 
@@ -173,13 +181,20 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ).showSnackBar(const SnackBar(content: Text("Coming Soon!")));
           }
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 48, color: color),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 28, color: color),
+              ),
               const SizedBox(height: 12),
               Text(
                 title,

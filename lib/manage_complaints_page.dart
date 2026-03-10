@@ -72,115 +72,152 @@ class _ManageComplaintsPageState extends State<ManageComplaintsPage> {
               final dateStr =
                   "${dateOfIncident.day}/${dateOfIncident.month}/${dateOfIncident.year}";
 
-              return Card(
-                elevation: 3,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              final userId = data['userId'] as String?;
+              final userFuture = userId != null && userId.isNotEmpty
+                  ? FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .get()
+                  : Future<DocumentSnapshot?>.value(null);
+
+              return FutureBuilder<DocumentSnapshot?>(
+                future: userFuture,
+                builder: (context, userSnapshot) {
+                  String displayEmail = data['userEmail'] ?? 'N/A';
+                  String displayPhone = data['userPhone'] ?? 'N/A';
+
+                  if (userSnapshot.hasData &&
+                      userSnapshot.data != null &&
+                      userSnapshot.data!.exists) {
+                    final userData =
+                        userSnapshot.data!.data() as Map<String, dynamic>;
+                    if (userData['email'] != null &&
+                        userData['email'].toString().isNotEmpty) {
+                      displayEmail = userData['email'];
+                    }
+                    if (userData['phoneNumber'] != null &&
+                        userData['phoneNumber'].toString().isNotEmpty) {
+                      displayPhone = userData['phoneNumber'];
+                    }
+                  }
+
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              'Complaint: ${data['complaintType'] ?? 'General'}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Complaint: ${data['complaintType'] ?? 'General'}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
                               ),
-                            ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(
+                                    status,
+                                  ).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _getStatusColor(status),
+                                  ),
+                                ),
+                                child: Text(
+                                  status,
+                                  style: TextStyle(
+                                    color: _getStatusColor(status),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(status).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _getStatusColor(status),
+                          const Divider(),
+                          _buildInfoRow(
+                            Icons.description,
+                            data['description'] ?? 'No description',
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoRow(
+                            Icons.location_on,
+                            data['location'] ?? 'No Location',
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoRow(
+                            Icons.calendar_today,
+                            "Happened on: $dateStr",
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoRow(
+                            Icons.map,
+                            "Zone: ${data['zone'] ?? 'N/A'}",
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoRow(Icons.email, "Email: $displayEmail"),
+                          const SizedBox(height: 8),
+                          _buildInfoRow(Icons.phone, "Phone: $displayPhone"),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              const Text("Update Status: "),
+                              const SizedBox(width: 8),
+                              DropdownButton<String>(
+                                value:
+                                    [
+                                      'Pending',
+                                      'In Review',
+                                      'Resolved',
+                                      'Dismissed',
+                                    ].contains(status)
+                                    ? status
+                                    : null,
+                                hint: const Text("Select"),
+                                items:
+                                    [
+                                      'Pending',
+                                      'In Review',
+                                      'Resolved',
+                                      'Dismissed',
+                                    ].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                onChanged: (newValue) {
+                                  if (newValue != null && newValue != status) {
+                                    _complaintService.updateComplaintStatus(
+                                      docId,
+                                      newValue,
+                                    );
+                                  }
+                                },
                               ),
-                            ),
-                            child: Text(
-                              status,
-                              style: TextStyle(
-                                color: _getStatusColor(status),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
-                      const Divider(),
-                      _buildInfoRow(
-                        Icons.description,
-                        data['description'] ?? 'No description',
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoRow(
-                        Icons.location_on,
-                        data['location'] ?? 'No Location',
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoRow(
-                        Icons.calendar_today,
-                        "Happened on: $dateStr",
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoRow(
-                        Icons.map,
-                        "Zone: ${data['zone'] ?? 'N/A'}",
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          const Text("Update Status: "),
-                          const SizedBox(width: 8),
-                          DropdownButton<String>(
-                            value:
-                                [
-                                  'Pending',
-                                  'In Review',
-                                  'Resolved',
-                                  'Dismissed',
-                                ].contains(status)
-                                ? status
-                                : null,
-                            hint: const Text("Select"),
-                            items:
-                                [
-                                  'Pending',
-                                  'In Review',
-                                  'Resolved',
-                                  'Dismissed',
-                                ].map((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                            onChanged: (newValue) {
-                              if (newValue != null && newValue != status) {
-                                _complaintService.updateComplaintStatus(
-                                  docId,
-                                  newValue,
-                                );
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           );

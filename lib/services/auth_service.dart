@@ -115,12 +115,13 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  // Create a collector account WITHOUT logging out the current admin
-  Future<void> createCollectorAccount({
+  // Create a secondary account (any user type) WITHOUT logging out the current admin
+  Future<void> createSecondaryAccount({
     required String email,
     required String password,
     required String fullName,
     required String phoneNumber,
+    required String userType,
     String? assignedZone,
   }) async {
     firebase_auth.FirebaseAuth? secondaryAuth;
@@ -143,7 +144,7 @@ class AuthService with ChangeNotifier {
       if (credential.user != null) {
         final newUser = User(
           email: email,
-          userType: 'Garbage Collector',
+          userType: userType,
           fullName: fullName,
           phoneNumber: phoneNumber,
           assignedZone: assignedZone,

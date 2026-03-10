@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'constants/app_constants.dart';
 
-import 'add_collector_page.dart';
+import 'add_user_page.dart';
 import 'collector_details_page.dart';
 
 class ManageUsersPage extends StatelessWidget {
@@ -10,148 +10,203 @@ class ManageUsersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Users & Collectors'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Manage Users & Collectors'),
+          backgroundColor: Colors.deepPurple,
+          foregroundColor: Colors.white,
+          bottom: const TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            tabs: [
+              Tab(text: 'Residents', icon: Icon(Icons.person)),
+              Tab(text: 'Collectors', icon: Icon(Icons.local_shipping)),
+              Tab(text: 'Admins', icon: Icon(Icons.admin_panel_settings)),
+            ],
+          ),
+        ),
+        floatingActionButton: Builder(
+          builder: (context) {
+            return FloatingActionButton(
+              onPressed: () {
+                final tabController = DefaultTabController.of(context);
+                String userType = 'Resident';
+                if (tabController.index == 1) userType = 'Garbage Collector';
+                if (tabController.index == 2) userType = 'Admin';
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddUserPage(userType: userType),
+                  ),
+                );
+              },
+              backgroundColor: Colors.orange,
+              child: const Icon(Icons.add),
+            );
+          },
+        ),
+        body: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Center(child: Text('No users found'));
+            }
+
+            final docs = snapshot.data!.docs;
+
+            final residents = docs.where((doc) {
+              final type =
+                  ((doc.data() as Map<String, dynamic>)['userType'] ??
+                          'Resident')
+                      .toString()
+                      .toLowerCase();
+              return type.contains('resident');
+            }).toList();
+
+            final collectors = docs.where((doc) {
+              final type =
+                  ((doc.data() as Map<String, dynamic>)['userType'] ??
+                          'Resident')
+                      .toString()
+                      .toLowerCase();
+              return type.contains('collector');
+            }).toList();
+
+            final admins = docs.where((doc) {
+              final type =
+                  ((doc.data() as Map<String, dynamic>)['userType'] ??
+                          'Resident')
+                      .toString()
+                      .toLowerCase();
+              return type.contains('admin');
+            }).toList();
+
+            return TabBarView(
+              children: [
+                _buildUserList(residents),
+                _buildUserList(collectors),
+                _buildUserList(admins),
+              ],
+            );
+          },
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddCollectorPage()),
-          );
-        },
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+    );
+  }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+  Widget _buildUserList(List<QueryDocumentSnapshot> docs) {
+    if (docs.isEmpty) {
+      return const Center(child: Text('No users found in this category'));
+    }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No users found'));
-          }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: docs.length,
+      itemBuilder: (context, index) {
+        final doc = docs[index];
+        final data = doc.data() as Map<String, dynamic>;
+        final userType = data['userType'] ?? 'Resident';
 
-          final docs = snapshot.data!.docs;
+        final isCollector = userType.toString().toLowerCase().contains(
+          'collector',
+        );
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              final userType = data['userType'] ?? 'Resident';
-
-              final isCollector = userType.toString().toLowerCase().contains(
-                'collector',
-              );
-
-              return Card(
-                elevation: 2,
-                color: isCollector
-                    ? Colors.orange.withOpacity(0.05)
-                    : Colors.white,
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: isCollector
-                      ? BorderSide(color: Colors.orange.withOpacity(0.3))
-                      : BorderSide.none,
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: _getUserTypeColor(
-                      userType,
-                    ).withOpacity(0.2),
-                    child: Icon(
-                      _getUserTypeIcon(userType),
-                      color: _getUserTypeColor(userType),
-                    ),
-                  ),
-                  title: Text(
-                    data['fullName'] ?? data['email'] ?? 'No Name',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    "$userType ${data['assignedZone'] != null ? '(${data['assignedZone']})' : ''}",
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        _deleteUser(context, doc.id, data['fullName']);
-                      } else if (value == 'view') {
-                        if (isCollector) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CollectorDetailsPage(
-                                userData: data,
-                                userId: doc.id,
-                              ),
-                            ),
-                          );
-                        } else {
-                          _showUserDetails(context, data, doc.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
-                          const PopupMenuItem<String>(
-                            value: 'view',
-                            child: Row(
-                              children: [
-                                Icon(Icons.visibility, color: Colors.blue),
-                                SizedBox(width: 8),
-                                Text('View Details'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete, color: Colors.red),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Delete User',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                  ),
-                  onTap: () {
-                    if (isCollector) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CollectorDetailsPage(
-                            userData: data,
-                            userId: doc.id,
-                          ),
+        return Card(
+          elevation: 2,
+          color: isCollector ? Colors.orange.withOpacity(0.05) : Colors.white,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: isCollector
+                ? BorderSide(color: Colors.orange.withOpacity(0.3))
+                : BorderSide.none,
+          ),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: _getUserTypeColor(userType).withOpacity(0.2),
+              child: Icon(
+                _getUserTypeIcon(userType),
+                color: _getUserTypeColor(userType),
+              ),
+            ),
+            title: Text(
+              data['fullName'] ?? data['email'] ?? 'No Name',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              "$userType ${data['assignedZone'] != null ? '(${data['assignedZone']})' : ''}",
+            ),
+            trailing: PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _deleteUser(context, doc.id, data['fullName']);
+                } else if (value == 'view') {
+                  if (isCollector) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CollectorDetailsPage(
+                          userData: data,
+                          userId: doc.id,
                         ),
-                      );
-                    } else {
-                      _showUserDetails(context, data, doc.id);
-                    }
-                  },
+                      ),
+                    );
+                  } else {
+                    _showUserDetails(context, data, doc.id);
+                  }
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'view',
+                  child: Row(
+                    children: [
+                      Icon(Icons.visibility, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('View Details'),
+                    ],
+                  ),
                 ),
-              );
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete User', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            onTap: () {
+              if (isCollector) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        CollectorDetailsPage(userData: data, userId: doc.id),
+                  ),
+                );
+              } else {
+                _showUserDetails(context, data, doc.id);
+              }
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

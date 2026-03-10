@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'services/auth_service.dart';
 import 'todays_route_page.dart';
+import 'mark_complete_page.dart';
+import 'collector_report_issue_page.dart';
+import 'collector_history_page.dart';
+import 'collector_notifications_page.dart';
+import 'collector_profile_page.dart';
 
 class GarbageCollectorDashboardPage extends StatelessWidget {
   const GarbageCollectorDashboardPage({super.key});
@@ -125,36 +130,6 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
                   ),
                 ],
               ),
-
-              const SizedBox(height: 30),
-
-              // Current Tasks Section
-              const Text(
-                'Assigned Pickups',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-
-              _buildPickupCard(
-                zone: 'Zone A',
-                address: '123 Main Street',
-                status: 'Pending',
-                icon: Icons.location_on,
-              ),
-              const SizedBox(height: 12),
-              _buildPickupCard(
-                zone: 'Zone B',
-                address: '456 Oak Avenue',
-                status: 'Completed',
-                icon: Icons.check_circle,
-              ),
-              const SizedBox(height: 12),
-              _buildPickupCard(
-                zone: 'Zone C',
-                address: '789 Elm Street',
-                status: 'Pending',
-                icon: Icons.location_on,
-              ),
             ],
           ),
         ),
@@ -170,8 +145,6 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
     required Color color,
   }) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           if (title == "Today's Route") {
@@ -179,15 +152,55 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (context) => const TodaysRoutePage()),
             );
+          } else if (title == 'Mark Complete') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MarkCompletePage()),
+            );
+          } else if (title == 'Report Issues') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CollectorReportIssuePage(),
+              ),
+            );
+          } else if (title == 'History') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CollectorHistoryPage(),
+              ),
+            );
+          } else if (title == 'Notifications') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CollectorNotificationsPage(),
+              ),
+            );
+          } else if (title == 'My Profile') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CollectorProfilePage(),
+              ),
+            );
           }
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 48, color: color),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 28, color: color),
+              ),
               const SizedBox(height: 12),
               Text(
                 title,
@@ -205,55 +218,6 @@ class GarbageCollectorDashboardPage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPickupCard({
-    required String zone,
-    required String address,
-    required String status,
-    required IconData icon,
-  }) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.orange, size: 32),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    zone,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  Text(
-                    address,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
-            Chip(
-              label: Text(status),
-              backgroundColor: status == 'Completed'
-                  ? Colors.green.withValues(alpha: 0.2)
-                  : Colors.orange.withValues(alpha: 0.2),
-              labelStyle: TextStyle(
-                color: status == 'Completed' ? Colors.green : Colors.orange,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
         ),
       ),
     );

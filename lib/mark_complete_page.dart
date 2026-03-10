@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/auth_service.dart';
+import 'services/pickup_service.dart';
 
-class TodaysRoutePage extends StatefulWidget {
-  const TodaysRoutePage({super.key});
+class MarkCompletePage extends StatefulWidget {
+  const MarkCompletePage({super.key});
 
   @override
-  State<TodaysRoutePage> createState() => _TodaysRoutePageState();
+  State<MarkCompletePage> createState() => _MarkCompletePageState();
 }
 
-class _TodaysRoutePageState extends State<TodaysRoutePage> {
+class _MarkCompletePageState extends State<MarkCompletePage> {
   final AuthService _authService = AuthService();
+  final PickupService _pickupService = PickupService();
   String? _collectorZone;
   bool _isLoading = true;
 
@@ -42,8 +44,8 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Today's Route"),
-        backgroundColor: Colors.orange,
+        title: const Text("Mark Complete"),
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -68,7 +70,6 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('pickup_requests')
-          // .where('zone', isEqualTo: _collectorZone) // Removed to avoid index error
           .where(
             'pickupDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
@@ -96,11 +97,15 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
           final data = doc.data() as Map<String, dynamic>;
           final docZone = (data['zone'] as String?)?.toLowerCase().trim() ?? '';
           final userZone = _collectorZone?.toLowerCase().trim() ?? '';
+          final status = (data['status'] as String?)?.toLowerCase() ?? '';
 
           // Check for exact match OR if one contains the other (e.g. "Zone A" vs "A")
-          return docZone == userZone ||
+          final isZoneMatch =
+              docZone == userZone ||
               docZone.endsWith(" $userZone") ||
               userZone.endsWith(" $docZone");
+
+          return isZoneMatch && status != 'completed';
         }).toList();
 
         if (docs.isEmpty) {
@@ -108,14 +113,10 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  size: 64,
-                  color: Colors.grey[400],
-                ),
+                Icon(Icons.check_circle, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  "No pickups scheduled for today in $_collectorZone",
+                  "All pickups completed for today in $_collectorZone!",
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ],
@@ -130,7 +131,6 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
             final doc = docs[index];
             final data = doc.data() as Map<String, dynamic>;
             final pickupDate = (data['pickupDate'] as Timestamp).toDate();
-            // Format time manually since intl is removed/unused
             final timeString =
                 "${pickupDate.hour}:${pickupDate.minute.toString().padLeft(2, '0')}";
             final status = data['status'] ?? 'pending';
@@ -241,7 +241,45 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
+                    // Action Buttons
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          try {
+                            await _pickupService.markPickupAsCompleted(doc.id);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Pickup marked as completed!"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Error: $e"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.check_circle_outline),
+                        label: const Text("Mark as Completed"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

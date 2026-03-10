@@ -3,14 +3,16 @@ import 'services/auth_service.dart';
 import 'constants/app_constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AddCollectorPage extends StatefulWidget {
-  const AddCollectorPage({super.key});
+class AddUserPage extends StatefulWidget {
+  final String userType;
+
+  const AddUserPage({super.key, required this.userType});
 
   @override
-  State<AddCollectorPage> createState() => _AddCollectorPageState();
+  State<AddUserPage> createState() => _AddUserPageState();
 }
 
-class _AddCollectorPageState extends State<AddCollectorPage> {
+class _AddUserPageState extends State<AddUserPage> {
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
 
@@ -26,7 +28,7 @@ class _AddCollectorPageState extends State<AddCollectorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Collector'),
+        title: Text('Add New ${widget.userType}'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
@@ -37,9 +39,9 @@ class _AddCollectorPageState extends State<AddCollectorPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Create Collector Account',
-                style: TextStyle(
+              Text(
+                'Create ${widget.userType} Account',
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
@@ -65,40 +67,43 @@ class _AddCollectorPageState extends State<AddCollectorPage> {
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 16),
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('zones')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  List<DropdownMenuItem<String>> zoneItems = [];
-                  if (snapshot.hasData) {
-                    zoneItems = snapshot.data!.docs.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final name = data['name'] as String;
-                      return DropdownMenuItem<String>(
-                        value: name,
-                        child: Text(name),
-                      );
-                    }).toList();
-                  }
+              if (widget.userType == 'Garbage Collector') ...[
+                const SizedBox(height: 16),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('zones')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    List<DropdownMenuItem<String>> zoneItems = [];
+                    if (snapshot.hasData) {
+                      zoneItems = snapshot.data!.docs.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final name = data['name'] as String;
+                        return DropdownMenuItem<String>(
+                          value: name,
+                          child: Text(name),
+                        );
+                      }).toList();
+                    }
 
-                  return DropdownButtonFormField<String>(
-                    value: _selectedZone,
-                    decoration: InputDecoration(
-                      labelText: 'Assign Zone',
-                      prefixIcon: const Icon(Icons.map),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    return DropdownButtonFormField<String>(
+                      value: _selectedZone,
+                      decoration: InputDecoration(
+                        labelText: 'Assign Zone',
+                        prefixIcon: const Icon(Icons.map),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    items: zoneItems,
-                    validator: (value) =>
-                        value == null ? 'Please select a zone' : null,
-                    onChanged: (value) => setState(() => _selectedZone = value),
-                  );
-                },
-              ),
+                      items: zoneItems,
+                      validator: (value) =>
+                          value == null ? 'Please select a zone' : null,
+                      onChanged: (value) =>
+                          setState(() => _selectedZone = value),
+                    );
+                  },
+                ),
+              ],
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _passwordController,
@@ -115,7 +120,7 @@ class _AddCollectorPageState extends State<AddCollectorPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: _isLoading ? null : _createCollector,
+                onPressed: _isLoading ? null : _createUser,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
@@ -154,23 +159,26 @@ class _AddCollectorPageState extends State<AddCollectorPage> {
     );
   }
 
-  Future<void> _createCollector() async {
+  Future<void> _createUser() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await _authService.createCollectorAccount(
+      await _authService.createSecondaryAccount(
         email: _emailController.text,
         password: _passwordController.text,
         fullName: _nameController.text,
         phoneNumber: _phoneController.text,
-        assignedZone: _selectedZone,
+        userType: widget.userType,
+        assignedZone: widget.userType == 'Garbage Collector'
+            ? _selectedZone
+            : null,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Collector created successfully!')),
+          SnackBar(content: Text('${widget.userType} created successfully!')),
         );
         Navigator.pop(context);
       }

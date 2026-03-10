@@ -57,26 +57,43 @@ class _LandingPageState extends State<LandingPage> {
                   children: [
                     // Header Icon
                     Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppConstants.primaryGreen.withValues(
-                          alpha: 0.15,
-                        ),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0x1A000000), // very soft shadow
+                            blurRadius: 20,
+                            offset: Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       child: const Icon(
-                        Icons.lock_person_rounded,
-                        size: 80,
+                        Icons.eco_rounded,
+                        size: 72,
                         color: AppConstants.primaryGreen,
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
+
+                    // Oikos Logo Text
+                    const Text(
+                      'Oikos',
+                      style: TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w900,
+                        color: AppConstants.primaryGreen,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
                     // Welcome Text
                     const Text(
                       'Welcome Back!',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppConstants.textDark,
                       ),
@@ -191,24 +208,15 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Login Button
+                    // Login Button (Using global theme, removing hardcoded styles)
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppConstants.primaryGreen,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 3,
-                          disabledBackgroundColor: Colors.grey[400],
-                        ),
                         child: _isLoading
                             ? const SizedBox(
-                                width: 20,
-                                height: 20,
+                                width: 24,
+                                height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(
@@ -217,11 +225,10 @@ class _LandingPageState extends State<LandingPage> {
                                 ),
                               )
                             : const Text(
-                                'Login',
+                                'Sign In',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
                                 ),
                               ),
                       ),

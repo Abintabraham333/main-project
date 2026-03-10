@@ -154,6 +154,9 @@ class _AddUserPageState extends State<AddUserPage> {
       validator: (value) {
         if (value == null || value.isEmpty) return '$label is required';
         if (label == 'Password' && value.length < 6) return 'Min 6 characters';
+        if (label == 'Phone Number' && !RegExp(r'^\d{10}$').hasMatch(value)) {
+          return 'Phone number must be exactly 10 digits';
+        }
         return null;
       },
     );

@@ -31,10 +31,24 @@ class _ManageComplaintsPageState extends State<ManageComplaintsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
       appBar: AppBar(
         title: const Text('Manage Complaints'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF4C1D95),
+                Color(0xFF7C3AED),
+              ], // Deep Purple to Violet
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _complaintService.getAllComplaints(),
@@ -49,9 +63,24 @@ class _ManageComplaintsPageState extends State<ManageComplaintsPage> {
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(
-              child: Text(
-                'No complaints found',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.inbox_outlined,
+                    size: 64,
+                    color: Color(0xFFCBD5E1),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No complaints found',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -101,14 +130,21 @@ class _ManageComplaintsPageState extends State<ManageComplaintsPage> {
                     }
                   }
 
-                  return Card(
-                    elevation: 3,
+                  return Container(
                     margin: const EdgeInsets.only(bottom: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -117,101 +153,142 @@ class _ManageComplaintsPageState extends State<ManageComplaintsPage> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  'Complaint: ${data['complaintType'] ?? 'General'}',
+                                  '${data['complaintType'] ?? 'General Issue'}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: 18,
+                                    color: Color(0xFF0F172A),
                                   ),
                                 ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                                  horizontal: 10,
+                                  vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
                                   color: _getStatusColor(
                                     status,
                                   ).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: _getStatusColor(status),
-                                  ),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  status,
+                                  status.toUpperCase(),
                                   style: TextStyle(
                                     color: _getStatusColor(status),
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
                                     fontSize: 12,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const Divider(),
+                          const SizedBox(height: 16),
                           _buildInfoRow(
-                            Icons.description,
-                            data['description'] ?? 'No description',
+                            Icons.description_outlined,
+                            data['description'] ?? 'No description provided',
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           _buildInfoRow(
-                            Icons.location_on,
-                            data['location'] ?? 'No Location',
+                            Icons.location_on_outlined,
+                            data['location'] ?? 'No Location Provided',
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           _buildInfoRow(
-                            Icons.calendar_today,
+                            Icons.calendar_today_outlined,
                             "Happened on: $dateStr",
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           _buildInfoRow(
-                            Icons.map,
+                            Icons.map_outlined,
                             "Zone: ${data['zone'] ?? 'N/A'}",
                           ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(color: Color(0xFFE2E8F0)),
+                          ),
+                          const Text(
+                            "Reporter Information:",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
                           const SizedBox(height: 8),
-                          _buildInfoRow(Icons.email, "Email: $displayEmail"),
+                          _buildInfoRow(Icons.email_outlined, displayEmail),
                           const SizedBox(height: 8),
-                          _buildInfoRow(Icons.phone, "Phone: $displayPhone"),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              const Text("Update Status: "),
-                              const SizedBox(width: 8),
-                              DropdownButton<String>(
-                                value:
-                                    [
-                                      'Pending',
-                                      'In Review',
-                                      'Resolved',
-                                      'Dismissed',
-                                    ].contains(status)
-                                    ? status
-                                    : null,
-                                hint: const Text("Select"),
-                                items:
-                                    [
-                                      'Pending',
-                                      'In Review',
-                                      'Resolved',
-                                      'Dismissed',
-                                    ].map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                onChanged: (newValue) {
-                                  if (newValue != null && newValue != status) {
-                                    _complaintService.updateComplaintStatus(
-                                      docId,
-                                      newValue,
-                                    );
-                                  }
-                                },
+                          _buildInfoRow(Icons.phone_outlined, displayPhone),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "Update Status",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value:
+                                        [
+                                          'Pending',
+                                          'In Review',
+                                          'Resolved',
+                                          'Dismissed',
+                                        ].contains(status)
+                                        ? status
+                                        : null,
+                                    hint: const Text("Select"),
+                                    icon: const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                    style: const TextStyle(
+                                      color: Color(0xFF0F172A),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                    items:
+                                        [
+                                          'Pending',
+                                          'In Review',
+                                          'Resolved',
+                                          'Dismissed',
+                                        ].map((String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
+                                          );
+                                        }).toList(),
+                                    onChanged: (newValue) {
+                                      if (newValue != null &&
+                                          newValue != status) {
+                                        _complaintService.updateComplaintStatus(
+                                          docId,
+                                          newValue,
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -230,9 +307,18 @@ class _ManageComplaintsPageState extends State<ManageComplaintsPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+        Icon(icon, size: 18, color: const Color(0xFF64748B)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF334155),
+              height: 1.4,
+            ),
+          ),
+        ),
       ],
     );
   }

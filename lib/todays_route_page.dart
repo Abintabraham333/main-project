@@ -41,10 +41,24 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFBEB), // Amber 50
       appBar: AppBar(
         title: const Text("Today's Route"),
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFFD97706),
+                Color(0xFFF59E0B),
+              ], // Amber 600 to Amber 500
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -53,6 +67,10 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
               child: Text(
                 "No zone assigned to your account.\nPlease contact admin.",
                 textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF92400E),
+                ), // Amber 900
               ),
             )
           : _buildPickupList(),
@@ -68,7 +86,6 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('pickup_requests')
-          // .where('zone', isEqualTo: _collectorZone) // Removed to avoid index error
           .where(
             'pickupDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
@@ -84,11 +101,18 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFD97706)),
+          );
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: Text("No pickups found."));
+          return const Center(
+            child: Text(
+              "No pickups found.",
+              style: TextStyle(color: Color(0xFF92400E)),
+            ),
+          );
         }
 
         // Client-side filtering
@@ -111,12 +135,16 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
                 Icon(
                   Icons.check_circle_outline,
                   size: 64,
-                  color: Colors.grey[400],
+                  color: Colors.amber[300],
                 ),
                 const SizedBox(height: 16),
                 Text(
                   "No pickups scheduled for today in $_collectorZone",
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: const TextStyle(
+                    color: Color(0xFF92400E),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -130,19 +158,26 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
             final doc = docs[index];
             final data = doc.data() as Map<String, dynamic>;
             final pickupDate = (data['pickupDate'] as Timestamp).toDate();
-            // Format time manually since intl is removed/unused
+            // Format time manually
             final timeString =
                 "${pickupDate.hour}:${pickupDate.minute.toString().padLeft(2, '0')}";
             final status = data['status'] ?? 'pending';
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              elevation: 2,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -151,49 +186,63 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 10,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange),
+                            color: const Color(0xFFFEF3C7), // Amber 100
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             data['wasteType'] ?? 'Unknown',
                             style: const TextStyle(
-                              color: Colors.orange,
+                              color: Color(0xFFD97706), // Amber 600
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
                           ),
                         ),
-                        Text(
-                          timeString,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 10,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
                             color: status == 'completed'
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
+                                ? const Color(0xFFD1FAE5) // Emerald 100
+                                : const Color(0xFFDBEAFE), // Blue 100
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             status.toUpperCase(),
                             style: TextStyle(
                               color: status == 'completed'
-                                  ? Colors.green
-                                  : Colors.blue,
+                                  ? const Color(0xFF059669) // Emerald 600
+                                  : const Color(0xFF2563EB), // Blue 600
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          color: Color(0xFFB45309), // Amber 700
+                          size: 22,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            data['address'] ?? 'No address',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B), // Slate 800
                             ),
                           ),
                         ),
@@ -203,18 +252,16 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
                     Row(
                       children: [
                         const Icon(
-                          Icons.location_on,
-                          color: Colors.grey,
+                          Icons.access_time_outlined,
+                          color: Color(0xFF94A3B8),
                           size: 20,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            data['address'] ?? 'No address',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        const SizedBox(width: 12),
+                        Text(
+                          timeString,
+                          style: const TextStyle(
+                            color: Color(0xFF475569), // Slate 600
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -222,26 +269,33 @@ class _TodaysRoutePageState extends State<TodaysRoutePage> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.person, color: Colors.grey, size: 20),
-                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.person_outline,
+                          color: Color(0xFF94A3B8),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
                         Text(
                           data['fullName'] ?? 'Unknown User',
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: const TextStyle(color: Color(0xFF475569)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.phone, color: Colors.grey, size: 20),
-                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.phone_outlined,
+                          color: Color(0xFF94A3B8),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
                         Text(
                           data['phoneNumber'] ?? 'No phone',
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: const TextStyle(color: Color(0xFF475569)),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
                   ],
                 ),
               ),

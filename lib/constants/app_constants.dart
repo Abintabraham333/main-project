@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 class AppConstants {
   // Colors
-  static const Color primaryGreen = Color(0xFF2E7D32);
-  static const Color lightGreen = Color(0xFFE8F5E9);
-  static const Color backgroundColor = Color(0xFFF6F8F7);
-  static const Color textDark = Colors.black87;
-  static const Color textGrey = Colors.grey;
+  static const Color primaryGreen = Color(0xFF0F766E); // Deep Teal
+  static const Color lightGreen = Color(0xFFF0FDF4); // Light Mint
+  static const Color backgroundColor = Color(0xFFF8FAFC); // Slate 50
+  static const Color textDark = Color(0xFF0F172A); // Slate 900
+  static const Color textGrey = Color(0xFF64748B); // Slate 500
 
   // Contact Information
   static const String supportPhone = '+1-800-WASTE-911';
@@ -22,7 +22,8 @@ class AppConstants {
   // App Info
   static const String appName = 'Oikos';
   static const String appVersion = '1.0.0';
-  static const String appTagline = 'Smart Waste Management for Sustainable Communities';
+  static const String appTagline =
+      'Smart Waste Management for Sustainable Communities';
   static const String copyright = '© 2025 Oikos';
 
   // Demo Credentials
@@ -41,12 +42,36 @@ class AppConstants {
 
   // Features List
   static const List<Map<String, String>> appFeatures = [
-    {'icon': '📍', 'title': 'Real-time Tracking', 'description': 'Track your waste pickups in real-time with GPS updates'},
-    {'icon': '📅', 'title': 'Smart Scheduling', 'description': 'Never miss a collection day with automatic reminders'},
-    {'icon': '♻️', 'title': 'Recycling Guide', 'description': 'Learn what can and cannot be recycled'},
-    {'icon': '📞', 'title': 'Direct Contact', 'description': 'Call collectors directly from the app'},
-    {'icon': '💬', 'title': 'Report Issues', 'description': 'File complaints and track their resolution'},
-    {'icon': '📊', 'title': 'Waste Stats', 'description': 'View your waste patterns and recycling contributions'},
+    {
+      'icon': '📍',
+      'title': 'Real-time Tracking',
+      'description': 'Track your waste pickups in real-time with GPS updates',
+    },
+    {
+      'icon': '📅',
+      'title': 'Smart Scheduling',
+      'description': 'Never miss a collection day with automatic reminders',
+    },
+    {
+      'icon': '♻️',
+      'title': 'Recycling Guide',
+      'description': 'Learn what can and cannot be recycled',
+    },
+    {
+      'icon': '📞',
+      'title': 'Direct Contact',
+      'description': 'Call collectors directly from the app',
+    },
+    {
+      'icon': '💬',
+      'title': 'Report Issues',
+      'description': 'File complaints and track their resolution',
+    },
+    {
+      'icon': '📊',
+      'title': 'Waste Stats',
+      'description': 'View your waste patterns and recycling contributions',
+    },
   ];
 
   // Team Members
@@ -54,22 +79,22 @@ class AppConstants {
     {
       'name': 'Dr. Sarah Green',
       'role': 'Founder & CEO',
-      'expertise': 'Environmental Science'
+      'expertise': 'Environmental Science',
     },
     {
       'name': 'James Chen',
       'role': 'CTO',
-      'expertise': 'Mobile & IoT Development'
+      'expertise': 'Mobile & IoT Development',
     },
     {
       'name': 'Maria Rodriguez',
       'role': 'Operations Lead',
-      'expertise': 'Waste Management'
+      'expertise': 'Waste Management',
     },
     {
       'name': 'Arun Patel',
       'role': 'Data Officer',
-      'expertise': 'Analytics & Insights'
+      'expertise': 'Analytics & Insights',
     },
   ];
 
@@ -77,19 +102,19 @@ class AppConstants {
   static const List<Map<String, String>> coreValues = [
     {
       'title': 'Sustainability',
-      'description': 'Environmental responsibility in every action'
+      'description': 'Environmental responsibility in every action',
     },
     {
       'title': 'Innovation',
-      'description': 'Cutting-edge technology for waste management'
+      'description': 'Cutting-edge technology for waste management',
     },
     {
       'title': 'Transparency',
-      'description': 'Clear communication with all stakeholders'
+      'description': 'Clear communication with all stakeholders',
     },
     {
       'title': 'Community',
-      'description': 'Building stronger communities together'
+      'description': 'Building stronger communities together',
     },
   ];
 

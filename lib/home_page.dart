@@ -13,34 +13,16 @@ void main() {
   runApp(const HomePage());
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Oikos',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        scaffoldBackgroundColor: const Color(0xFFF5F6F7),
-      ),
-      home: const DashboardScreen(),
-    );
-  }
+  State<HomePage> createState() => _HomePageState();
 }
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  // 🔹 Static flag so banner shows only once per app run
+class _HomePageState extends State<HomePage> {
+  // Static flag so banner shows only once per app run
   static bool hasShownBanner = false;
-
   bool showBanner = false;
 
   @override
@@ -67,17 +49,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Oikos',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
-        ),
+        title: const Text('Oikos'),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.popUntil(context, (route) => route.isFirst);
-            },
-            child: const Text("Home", style: TextStyle(color: Colors.black)),
-          ),
           TextButton(
             onPressed: () {
               Navigator.push(
@@ -85,10 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 MaterialPageRoute(builder: (_) => const AboutPage()),
               );
             },
-            child: const Text(
-              "About Us",
-              style: TextStyle(color: Colors.black),
-            ),
+            child: const Text("About Us"),
           ),
           TextButton(
             onPressed: () {
@@ -97,7 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 MaterialPageRoute(builder: (_) => const HelpPage()),
               );
             },
-            child: const Text("Help", style: TextStyle(color: Colors.black)),
+            child: const Text("Help"),
           ),
           TextButton(
             onPressed: () {
@@ -107,120 +77,172 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 (route) => false,
               );
             },
-            child: const Text("Logout", style: TextStyle(color: Colors.black)),
+            child: const Text("Logout"),
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // 🔹 Banner shows only once per app run
-            if (showBanner)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(8),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Banner shows only once per app run
+              if (showBanner)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0F766E), Color(0xFF10B981)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F766E).withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.check_circle_outline, color: Colors.white),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Login successful! Welcome back.",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: const Text(
-                  "✓ Login successful! Welcome back.",
-                  style: TextStyle(color: Colors.white),
-                  textAlign: TextAlign.center,
+
+              const Text(
+                "Resident Services",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
                 ),
               ),
-
-            if (showBanner) const SizedBox(height: 16),
-
-            const Text(
-              "Resident Services Dashboard",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
+              const SizedBox(height: 8),
+              const Text(
+                "Manage your waste and recycling easily.",
+                style: TextStyle(fontSize: 15, color: Color(0xFF64748B)),
               ),
-            ),
+              const SizedBox(height: 32),
 
-            const SizedBox(height: 16),
-
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.85,
-                children: [
-                  DashboardCard(
-                    icon: Icons.local_shipping,
-                    title: "Request Pickup",
-                    subtitle: "Schedule bulk pickup",
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RequestPickupPage(),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.9,
+                  children: [
+                    DashboardCard(
+                      icon: Icons.local_shipping_outlined,
+                      title: "Request Pickup",
+                      subtitle: "Schedule bulk pickup",
+                      gradientColors: const [
+                        Color(0xFF0EA5E9),
+                        Color(0xFF0284C7),
+                      ],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RequestPickupPage(),
+                        ),
                       ),
                     ),
-                  ),
-                  DashboardCard(
-                    icon: Icons.report_problem,
-                    title: "Lodge Complaint",
-                    subtitle: "Report issues",
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const LodgeComplaintPage(),
+                    DashboardCard(
+                      icon: Icons.report_problem_outlined,
+                      title: "Lodge Complaint",
+                      subtitle: "Report issues",
+                      gradientColors: const [
+                        Color(0xFFF43F5E),
+                        Color(0xFFE11D48),
+                      ],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LodgeComplaintPage(),
+                        ),
                       ),
                     ),
-                  ),
-                  DashboardCard(
-                    icon: Icons.calendar_today,
-                    title: "View Schedule",
-                    subtitle: "Check pickup dates",
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ViewSchedulePage(),
+                    DashboardCard(
+                      icon: Icons.calendar_today_outlined,
+                      title: "View Schedule",
+                      subtitle: "Check pickup dates",
+                      gradientColors: const [
+                        Color(0xFF8B5CF6),
+                        Color(0xFF7C3AED),
+                      ],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ViewSchedulePage(),
+                        ),
                       ),
                     ),
-                  ),
-                  DashboardCard(
-                    icon: Icons.recycling,
-                    title: "Recycling Guide",
-                    subtitle: "What to recycle",
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RecyclingGuidePage(),
+                    DashboardCard(
+                      icon: Icons.recycling_outlined,
+                      title: "Recycling Guide",
+                      subtitle: "What to recycle",
+                      gradientColors: const [
+                        Color(0xFF10B981),
+                        Color(0xFF059669),
+                      ],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RecyclingGuidePage(),
+                        ),
                       ),
                     ),
-                  ),
-                  DashboardCard(
-                    icon: Icons.history,
-                    title: "Pickup History",
-                    subtitle: "Past pickups",
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const PickupHistoryPage(),
+                    DashboardCard(
+                      icon: Icons.history_outlined,
+                      title: "Pickup History",
+                      subtitle: "Past pickups",
+                      gradientColors: const [
+                        Color(0xFFF59E0B),
+                        Color(0xFFD97706),
+                      ],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PickupHistoryPage(),
+                        ),
                       ),
                     ),
-                  ),
-                  DashboardCard(
-                    icon: Icons.check_circle,
-                    title: "Pickup Status",
-                    subtitle: "Check status",
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const PickupStatusPage(),
+                    DashboardCard(
+                      icon: Icons.check_circle_outline,
+                      title: "Pickup Status",
+                      subtitle: "Check status",
+                      gradientColors: const [
+                        Color(0xFF0F766E),
+                        Color(0xFF115E59),
+                      ],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PickupStatusPage(),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -232,6 +254,7 @@ class DashboardCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final List<Color> gradientColors;
 
   const DashboardCard({
     super.key,
@@ -239,45 +262,80 @@ class DashboardCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    required this.gradientColors,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      // Inherits shape, elevation, and margin from global CardThemeData
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          highlightColor: gradientColors[0].withOpacity(0.05),
+          splashColor: gradientColors[0].withOpacity(0.1),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradientColors[0].withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, size: 28, color: Colors.white),
                 ),
-                child: Icon(icon, size: 28, color: Colors.green),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                  fontSize: 13,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                        fontSize: 16,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                textAlign: TextAlign.center,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

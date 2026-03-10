@@ -19,12 +19,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Admin Dashboard',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.deepPurple,
-        elevation: 0,
+        title: const Text('Admin Console'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -38,103 +33,148 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               );
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.deepPurple, width: 2),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Welcome Admin',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF6366F1),
+                        Color(0xFF4338CA),
+                      ], // Indigo gradient
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'System Management & Oversight',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4338CA).withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.admin_panel_settings_outlined,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Welcome, Admin',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'System Management & Oversight',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Admin Features Grid
+                const Text(
+                  'Management Options',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.9,
+                  children: [
+                    _buildFeatureCard(
+                      icon: Icons.people_outline,
+                      title: 'Users Management',
+                      subtitle: 'Manage roles & access',
+                      gradientColors: const [
+                        Color(0xFF0EA5E9),
+                        Color(0xFF0284C7),
+                      ], // Sky Blue
+                    ),
+                    _buildFeatureCard(
+                      icon: Icons.report_outlined,
+                      title: 'Complaints',
+                      subtitle: 'Review user issues',
+                      gradientColors: const [
+                        Color(0xFFF59E0B),
+                        Color(0xFFD97706),
+                      ], // Amber
+                    ),
+                    _buildFeatureCard(
+                      icon: Icons.warning_amber_rounded,
+                      title: 'GC Reports',
+                      subtitle: 'View field issues',
+                      gradientColors: const [
+                        Color(0xFFF43F5E),
+                        Color(0xFFE11D48),
+                      ], // Rose
+                    ),
+                    _buildFeatureCard(
+                      icon: Icons.schedule_outlined,
+                      title: 'Pickup Schedule',
+                      subtitle: 'Manage schedules',
+                      gradientColors: const [
+                        Color(0xFF10B981),
+                        Color(0xFF059669),
+                      ], // Emerald
+                    ),
+                    _buildFeatureCard(
+                      icon: Icons.analytics_outlined,
+                      title: 'Statistics',
+                      subtitle: 'View system analytics',
+                      gradientColors: const [
+                        Color(0xFF8B5CF6),
+                        Color(0xFF7C3AED),
+                      ], // Violet
+                    ),
+                    _buildFeatureCard(
+                      icon: Icons.domain_outlined,
+                      title: 'Zone Mgmt',
+                      subtitle: 'Manage areas',
+                      gradientColors: const [
+                        Color(0xFF0F766E),
+                        Color(0xFF115E59),
+                      ], // Teal
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 30),
-
-              // Admin Features Grid
-              const Text(
-                'Management Options',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: [
-                  _buildFeatureCard(
-                    icon: Icons.people,
-                    title: 'Users Management',
-                    subtitle: 'Manage residents & collectors',
-                    color: Colors.blue,
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.report,
-                    title: 'Complaints Review',
-                    subtitle: 'View all complaints',
-                    color: Colors.orange,
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.warning,
-                    title: 'Collector Reports',
-                    subtitle: 'View GC issues',
-                    color: Colors.pink,
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.schedule,
-                    title: 'Pickup Schedule',
-                    subtitle: 'Manage schedules',
-                    color: Colors.green,
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.analytics,
-                    title: 'Statistics',
-                    subtitle: 'View analytics',
-                    color: Colors.purple,
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.domain,
-                    title: 'Zone Management',
-                    subtitle: 'Manage zones & areas',
-                    color: Colors.teal,
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.settings,
-                    title: 'System Settings',
-                    subtitle: 'Configure system',
-                    color: Colors.red,
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -145,72 +185,112 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     required IconData icon,
     required String title,
     required String subtitle,
-    required Color color,
+    required List<Color> gradientColors,
   }) {
-    return Card(
-      child: InkWell(
-        onTap: () {
-          Widget? page;
-          switch (title) {
-            case 'Users Management':
-              page = const ManageUsersPage();
-              break;
-            case 'Complaints Review':
-              page = const ManageComplaintsPage();
-              break;
-            case 'Pickup Schedule':
-              page = const ManagePickupsPage();
-              break;
-            case 'Zone Management':
-              page = const ManageZonesPage();
-              break;
-            case 'Collector Reports':
-              page = const ManageCollectorReportsPage();
-              break;
-            // Add other cases as implemented
-          }
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Widget? page;
+            switch (title) {
+              case 'Users Management':
+                page = const ManageUsersPage();
+                break;
+              case 'Complaints':
+                page = const ManageComplaintsPage();
+                break;
+              case 'Pickup Schedule':
+                page = const ManagePickupsPage();
+                break;
+              case 'Zone Mgmt':
+                page = const ManageZonesPage();
+                break;
+              case 'GC Reports':
+                page = const ManageCollectorReportsPage();
+                break;
+              // Add other cases as implemented
+            }
 
-          if (page != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => page!),
-            );
-          } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text("Coming Soon!")));
-          }
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+            if (page != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => page!),
+              );
+            } else {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("Coming Soon!")));
+            }
+          },
+          borderRadius: BorderRadius.circular(24),
+          highlightColor: gradientColors[0].withOpacity(0.05),
+          splashColor: gradientColors[0].withOpacity(0.1),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradientColors[0].withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, size: 28, color: Colors.white),
                 ),
-                child: Icon(icon, size: 28, color: color),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                        fontSize: 15,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

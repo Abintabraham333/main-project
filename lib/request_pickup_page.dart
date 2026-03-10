@@ -142,27 +142,37 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F7),
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
       appBar: AppBar(
         title: Text(_isEditing ? "Update Request" : "Request Pickup"),
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF0F766E),
+                Color(0xFF10B981),
+              ], // Deep Teal to Emerald
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                _isEditing
-                    ? "Update Pickup Request"
-                    : "Request a Special Pickup",
+                _isEditing ? "Update Request" : "Schedule a Pickup",
                 style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 8),
@@ -170,16 +180,23 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
                 "Use this form to schedule a pickup for large or special items. "
                 "Please place items at the curbside by 7 AM on your selected collection day.",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.black54),
+                style: TextStyle(fontSize: 15, color: Color(0xFF64748B)),
               ),
-              const SizedBox(height: 20),
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 32),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -188,12 +205,12 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
                         const Text(
                           "Contact Information",
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E7D32),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F766E),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         _inputField(
                           "Full Name",
                           controller: _nameController,
@@ -205,9 +222,15 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
                           "Phone Number",
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
-                          validator: (v) => v == null || v.isEmpty
-                              ? "Phone is required"
-                              : null,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return "Phone is required";
+                            }
+                            if (!RegExp(r'^\d{10}$').hasMatch(v)) {
+                              return "Phone number must be exactly 10 digits";
+                            }
+                            return null;
+                          },
                         ),
                         _inputField(
                           "Pickup Address",
@@ -217,16 +240,16 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
                               ? "Address is required"
                               : null,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         const Text(
                           "Pickup Details",
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E7D32),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F766E),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         _dropdownField(
                           label: "Zone / Area",
                           value: zone,
@@ -247,50 +270,69 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
                             });
                           },
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         GestureDetector(
                           onTap: pickDate,
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
+                              horizontal: 16,
                               vertical: 16,
                             ),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade400),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              selectedDate == null
-                                  ? "Preferred Pickup Date"
-                                  : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-                              style: TextStyle(
-                                color: selectedDate == null
-                                    ? Colors.grey
-                                    : Colors.black,
+                              color: const Color(0xFFF8FAFC),
+                              border: Border.all(
+                                color: const Color(0xFFCBD5E1),
                               ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  selectedDate == null
+                                      ? "Preferred Pickup Date"
+                                      : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: selectedDate == null
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.calendar_today_outlined,
+                                  color: Color(0xFF64748B),
+                                  size: 20,
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 32),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2E7D32),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              backgroundColor: const Color(0xFF0F766E),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(16),
                               ),
+                              elevation: 4,
+                              shadowColor: const Color(
+                                0xFF0F766E,
+                              ).withOpacity(0.5),
                               disabledBackgroundColor: Colors.grey[400],
                             ),
                             onPressed: _isLoading ? null : _submitRequest,
                             child: _isLoading
                                 ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                    width: 24,
+                                    height: 24,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                      strokeWidth: 2.5,
                                       valueColor: AlwaysStoppedAnimation(
                                         Colors.white,
                                       ),
@@ -302,7 +344,7 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
                                         : "Submit Request",
                                     style: const TextStyle(
                                       fontSize: 16,
-                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                           ),
@@ -312,10 +354,10 @@ class _RequestPickupPageState extends State<RequestPickupPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               const Text(
                 "© Oikos",
-                style: TextStyle(color: Colors.black45, fontSize: 12),
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
               ),
             ],
           ),

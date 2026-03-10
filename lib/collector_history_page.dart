@@ -41,15 +41,39 @@ class _CollectorHistoryPageState extends State<CollectorHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
       appBar: AppBar(
         title: const Text("History"),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF8B5CF6),
+                Color(0xFF7C3AED),
+              ], // Violet 500 to Violet 600
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+            )
           : _collectorZone == null
-          ? const Center(child: Text("No zone assigned"))
+          ? const Center(
+              child: Text(
+                "No zone assigned",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF4C1D95),
+                ), // Violet 900
+              ),
+            )
           : StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('pickup_requests')
@@ -60,11 +84,16 @@ class _CollectorHistoryPageState extends State<CollectorHistoryPage> {
                 if (snapshot.hasError)
                   return Center(child: Text("Error: ${snapshot.error}"));
                 if (snapshot.connectionState == ConnectionState.waiting)
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+                  );
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Center(
-                    child: Text("No past collections found."),
+                    child: Text(
+                      "No past collections found.",
+                      style: TextStyle(color: Color(0xFF4C1D95), fontSize: 16),
+                    ),
                   );
                 }
 
@@ -93,8 +122,25 @@ class _CollectorHistoryPageState extends State<CollectorHistoryPage> {
                 });
 
                 if (docs.isEmpty) {
-                  return const Center(
-                    child: Text("No past collections found for your zone."),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.history,
+                          size: 64,
+                          color: Colors.purple[200],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "No past collections found for your zone.",
+                          style: TextStyle(
+                            color: Color(0xFF4C1D95),
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
@@ -108,19 +154,52 @@ class _CollectorHistoryPageState extends State<CollectorHistoryPage> {
                         ? "${date.day}/${date.month}/${date.year}"
                         : 'Unknown Date';
 
-                    return Card(
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.purple.withOpacity(0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: ListTile(
-                        leading: const Icon(
-                          Icons.history,
-                          color: Colors.purple,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
                         ),
-                        title: Text(data['address'] ?? 'No address'),
-                        subtitle: Text(
-                          "$dateStr - ${data['wasteType'] ?? 'General'}",
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEDE9FE), // Violet 100
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.history,
+                            color: Color(0xFF8B5CF6), // Violet 500
+                          ),
+                        ),
+                        title: Text(
+                          data['address'] ?? 'No address',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B), // Slate 800
+                          ),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            "$dateStr - ${data['wasteType'] ?? 'General'}",
+                            style: const TextStyle(color: Color(0xFF64748B)),
+                          ),
                         ),
                         trailing: const Icon(
                           Icons.check_circle,
-                          color: Colors.green,
+                          color: Color(0xFF10B981), // Emerald 500
                         ),
                       ),
                     );

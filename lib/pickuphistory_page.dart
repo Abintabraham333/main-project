@@ -34,13 +34,25 @@ class _PickupHistoryPageState extends State<PickupHistoryPage> {
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
       appBar: AppBar(
         title: const Text("Pickup History"),
-        backgroundColor: AppConstants.primaryGreen,
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF0F766E),
+                Color(0xFF10B981),
+              ], // Deep Teal to Emerald
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
-      backgroundColor: AppConstants.backgroundColor,
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('pickup_requests')
@@ -89,20 +101,20 @@ class _PickupHistoryPageState extends State<PickupHistoryPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 80, color: Colors.grey[300]),
+          Icon(Icons.history, size: 80, color: const Color(0xFFCBD5E1)),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'No pickup history available',
             style: TextStyle(
               fontSize: 18,
-              color: Colors.grey[600],
+              color: Color(0xFF475569),
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Completed pickups will appear here',
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
           ),
         ],
       ),
@@ -127,12 +139,21 @@ class _PickupHistoryPageState extends State<PickupHistoryPage> {
       pickupDate = (data['pickupDate'] as Timestamp).toDate();
     }
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -143,67 +164,93 @@ class _PickupHistoryPageState extends State<PickupHistoryPage> {
                 Text(
                   'Pickup ID: $requestId',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFF64748B),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
+                    horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status).withOpacity(0.1),
-                    border: Border.all(
-                      color: _getStatusColor(status).withOpacity(0.5),
-                    ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    status,
+                    status.toUpperCase(),
                     style: TextStyle(
                       color: _getStatusColor(status),
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       fontSize: 12,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(color: Color(0xFFE2E8F0)),
+            ),
             // Date and Time
             Row(
               children: [
-                const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-                const SizedBox(width: 8),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
+                const SizedBox(width: 10),
                 Text(
                   '${pickupDate.day}/${pickupDate.month}/${pickupDate.year}',
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF334155),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             // Location
             Row(
               children: [
-                const Icon(Icons.location_on, size: 18, color: Colors.grey),
-                const SizedBox(width: 8),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     location,
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF334155),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             // Waste Type
             Row(
               children: [
-                const Icon(Icons.category, size: 18, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(wasteType, style: const TextStyle(fontSize: 13)),
+                const Icon(
+                  Icons.category_outlined,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  wasteType,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF334155),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -215,13 +262,18 @@ class _PickupHistoryPageState extends State<PickupHistoryPage> {
                   if (weight != null)
                     Row(
                       children: [
-                        const Icon(Icons.scale, size: 18, color: Colors.grey),
-                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.scale_outlined,
+                          size: 18,
+                          color: Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 10),
                         Text(
                           '$weight kg',
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
+                            color: Color(0xFF334155),
                           ),
                         ),
                       ],
@@ -231,8 +283,9 @@ class _PickupHistoryPageState extends State<PickupHistoryPage> {
                       child: Text(
                         notes,
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                          fontSize: 13,
+                          color: Color(0xFF94A3B8),
+                          fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.right,
                         overflow: TextOverflow.ellipsis,

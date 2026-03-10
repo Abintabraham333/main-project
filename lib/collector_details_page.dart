@@ -327,13 +327,22 @@ class CollectorDetailsPage extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
+              final phone = phoneController.text.trim();
+              if (phone.isEmpty || !RegExp(r'^\d{10}$').hasMatch(phone)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Phone number must be exactly 10 digits"),
+                  ),
+                );
+                return;
+              }
               try {
                 await FirebaseFirestore.instance
                     .collection('users')
                     .doc(userId)
                     .update({
                       'fullName': nameController.text.trim(),
-                      'phoneNumber': phoneController.text.trim(),
+                      'phoneNumber': phone,
                     });
                 if (context.mounted) {
                   Navigator.pop(context);

@@ -81,32 +81,62 @@ class _PickupStatusPageState extends State<PickupStatusPage> {
             return const Center(child: CircularProgressIndicator());
           }
 
+          Widget emptyState = Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.local_shipping, size: 80, color: Colors.grey[300]),
+                const SizedBox(height: 16),
+                Text(
+                  'No active pickups',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Request a pickup to see status updates here',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          );
+
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.local_shipping, size: 80, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No active pickups',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Request a pickup to see status updates here',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                  ),
-                ],
-              ),
-            );
+            return emptyState;
           }
 
-          final docs = snapshot.data!.docs;
+          final allDocs = snapshot.data!.docs;
+          final now = DateTime.now();
+
+          // Filter out completed, cancelled, or rejected pickups older than 3 hours
+          final docs = allDocs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final status = (data['status'] ?? 'pending')
+                .toString()
+                .toLowerCase();
+            if (status == 'completed' ||
+                status == 'cancelled' ||
+                status == 'rejected') {
+              final completedAt =
+                  data['completedAt'] ??
+                  data['updatedAt'] ??
+                  data['pickupDate'];
+              if (completedAt != null && completedAt is Timestamp) {
+                final completedTime = completedAt.toDate();
+                if (now.difference(completedTime).inHours >= 3) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }).toList();
+
+          if (docs.isEmpty) {
+            return emptyState;
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),

@@ -3,6 +3,8 @@ import 'package:flutter_application_7/request_pickup_page.dart';
 import 'package:flutter_application_7/about_page.dart';
 import 'package:flutter_application_7/help_page.dart';
 import 'package:flutter_application_7/login_page.dart';
+import 'package:flutter_application_7/user_notifications_page.dart';
+import 'package:flutter_application_7/complaint_history_page.dart';
 import 'package:flutter_application_7/lodgecomplaint_page.dart';
 import 'package:flutter_application_7/pickuphistory_page.dart';
 import 'package:flutter_application_7/pickupstatus_page.dart';
@@ -51,6 +53,17 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Oikos'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const UserNotificationsPage(),
+                ),
+              );
+            },
+          ),
           TextButton(
             onPressed: () {
               Navigator.push(
@@ -235,6 +248,21 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const PickupStatusPage(),
+                        ),
+                      ),
+                    ),
+                    DashboardCard(
+                      icon: Icons.history_edu_outlined,
+                      title: "Complaint History",
+                      subtitle: "View your reports",
+                      gradientColors: const [
+                        Color(0xFF6366F1),
+                        Color(0xFF4F46E5),
+                      ],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ComplaintHistoryPage(),
                         ),
                       ),
                     ),

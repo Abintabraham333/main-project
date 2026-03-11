@@ -51,7 +51,35 @@ class _ViewSchedulePageState extends State<ViewSchedulePage> {
             return const Center(child: Text('No pickup requests found.'));
           }
 
-          final docs = snapshot.data!.docs;
+          final allDocs = snapshot.data!.docs;
+          final now = DateTime.now();
+
+          // Filter out completed, cancelled, or rejected pickups older than 3 hours
+          final docs = allDocs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final status = (data['status'] ?? 'pending')
+                .toString()
+                .toLowerCase();
+            if (status == 'completed' ||
+                status == 'cancelled' ||
+                status == 'rejected') {
+              final completedAt =
+                  data['completedAt'] ??
+                  data['updatedAt'] ??
+                  data['pickupDate'];
+              if (completedAt != null && completedAt is Timestamp) {
+                final completedTime = completedAt.toDate();
+                if (now.difference(completedTime).inHours >= 3) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }).toList();
+
+          if (docs.isEmpty) {
+            return const Center(child: Text('No pickup requests found.'));
+          }
 
           // Calculate summary stats
           int pendingCount = 0;

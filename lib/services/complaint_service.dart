@@ -44,12 +44,23 @@ class ComplaintService {
   }
 
   // Admin: Update complaint status
-  Future<void> updateComplaintStatus(String docId, String newStatus) async {
+  Future<void> updateComplaintStatus(
+    String docId,
+    String newStatus, {
+    String? adminMessage,
+  }) async {
     try {
-      await _firestore.collection('complaints').doc(docId).update({
+      final updates = <String, dynamic>{
         'status': newStatus,
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      };
+
+      if (adminMessage != null && adminMessage.isNotEmpty) {
+        updates['adminMessage'] = adminMessage;
+        updates['adminMessageSentAt'] = FieldValue.serverTimestamp();
+      }
+
+      await _firestore.collection('complaints').doc(docId).update(updates);
     } catch (e) {
       throw Exception("Failed to update status: $e");
     }

@@ -57,11 +57,26 @@ class _ComplaintHistoryPageState extends State<ComplaintHistoryPage> {
         stream: FirebaseFirestore.instance
             .collection('complaints')
             .where('userId', isEqualTo: currentUser!.uid)
-            .orderBy('dateOfIncident', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading history: ${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -93,6 +108,17 @@ class _ComplaintHistoryPageState extends State<ComplaintHistoryPage> {
           }
 
           final docs = snapshot.data!.docs;
+          
+          // Sort in memory to avoid needing a composite index
+          docs.sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+            final aDate = aData['dateOfIncident'] as Timestamp?;
+            final bDate = bData['dateOfIncident'] as Timestamp?;
+            if (aDate == null) return 1;
+            if (bDate == null) return -1;
+            return bDate.compareTo(aDate); // Descending
+          });
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
@@ -102,7 +128,14 @@ class _ComplaintHistoryPageState extends State<ComplaintHistoryPage> {
               final status = data['status'] ?? 'Pending';
               final complaintType = data['complaintType'] ?? 'General Issue';
               final description = data['description'] ?? '';
-              final dateOfIncident = (data['dateOfIncident'] as Timestamp).toDate();
+              
+              // Safe date handling
+              DateTime dateOfIncident;
+              if (data['dateOfIncident'] is Timestamp) {
+                dateOfIncident = (data['dateOfIncident'] as Timestamp).toDate();
+              } else {
+                dateOfIncident = DateTime.now();
+              }
               final dateStr = "${dateOfIncident.day}/${dateOfIncident.month}/${dateOfIncident.year}";
               final adminMessage = data['adminMessage'] as String?;
 
